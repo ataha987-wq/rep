@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>تقارير زيارة العملاء</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B2A4A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A4A;
+    --navy-light:#2A3F68;
+    --amber:#E3A008;
+    --amber-light:#FCEBC2;
+    --bg:#F5F4F0;
+    --card:#FFFFFF;
+    --ink:#20263A;
+    --muted:#7B8299;
+    --line:#E7E5DE;
+    --success:#2E7D32;
+    --success-bg:#E7F3E8;
+    --danger:#C0392B;
+    --danger-bg:#FBEAE7;
+    --radius:16px;
+    --shadow: 0 6px 20px rgba(27,42,74,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',sans-serif;}
+  h1,h2,h3,.brand{font-family:'Cairo',sans-serif;}
+  .screen{min-height:100vh;display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- شاشة الدخول ---------- */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg, var(--navy) 0%, var(--navy-light) 55%, #3A4F7A 100%);
+    padding:24px;
+  }
+  .login-card{
+    background:var(--card);
+    border-radius:20px;
+    padding:36px 28px;
+    width:100%;max-width:380px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+    text-align:center;
+  }
+  .login-badge{
+    width:64px;height:64px;border-radius:50%;
+    background:var(--amber-light);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;font-size:28px;
+  }
+  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--navy);}
+  .login-card p{color:var(--muted);font-size:14px;margin:0 0 24px;}
+  input[type=password], input[type=text], input[type=tel], textarea, select{
+    width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;
+    font-family:'Tajawal',sans-serif;font-size:15px;background:#FAFAF8;color:var(--ink);
+    transition:border-color .15s;
+  }
+  input:focus, textarea:focus, select:focus{outline:none;border-color:var(--navy);background:#fff;}
+  .btn{
+    display:block;width:100%;padding:15px;border:none;border-radius:12px;
+    font-family:'Cairo',sans-serif;font-weight:700;font-size:15px;cursor:pointer;
+    transition:transform .1s, opacity .15s;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-amber{background:var(--amber);color:#2A2000;}
+  .btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .field{margin-bottom:16px;text-align:right;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .error-msg{background:var(--danger-bg);color:var(--danger);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;}
+  .error-msg.show{display:block;}
+
+  /* ---------- الهيدر والتبويبات ---------- */
+  header.app-header{
+    background:var(--navy);color:#fff;padding:18px 20px 54px;
+    position:relative;
+  }
+  header.app-header .top-row{display:flex;justify-content:space-between;align-items:center;}
+  header.app-header .brand{font-size:18px;font-weight:800;}
+  header.app-header .rep-name{font-size:13px;opacity:0.85;margin-top:2px;}
+  .logout-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;padding:8px 14px;border-radius:10px;font-family:'Tajawal';font-size:12px;cursor:pointer;}
+
+  .tabs{
+    display:flex;gap:8px;background:var(--card);border-radius:14px;
+    margin:-38px 16px 0;padding:6px;box-shadow:var(--shadow);position:relative;z-index:2;
+  }
+  .tab{flex:1;text-align:center;padding:12px 8px;border-radius:10px;font-family:'Cairo';font-weight:700;font-size:14px;color:var(--muted);cursor:pointer;}
+  .tab.active{background:var(--navy);color:#fff;}
+
+  main{padding:20px 16px 90px;max-width:640px;margin:0 auto;}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h2{font-size:16px;margin:0 0 16px;color:var(--navy);}
+
+  .status-toggle{display:flex;gap:10px;}
+  .status-opt{
+    flex:1;padding:14px;border-radius:12px;border:2px solid var(--line);text-align:center;
+    cursor:pointer;font-family:'Cairo';font-weight:700;font-size:14px;color:var(--muted);
+  }
+  .status-opt.selected-open{border-color:var(--success);background:var(--success-bg);color:var(--success);}
+  .status-opt.selected-closed{border-color:var(--danger);background:var(--danger-bg);color:var(--danger);}
+
+  .photo-picker{
+    border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);
+    cursor:pointer;font-size:13px;
+  }
+  .photo-preview-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+  .photo-thumb{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;}
+  .photo-thumb img{width:100%;height:100%;object-fit:cover;}
+  .photo-thumb .remove-x{
+    position:absolute;top:2px;left:2px;background:rgba(0,0,0,0.6);color:#fff;
+    width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12px;cursor:pointer;
+  }
+
+  .datetime-badge{
+    display:inline-flex;align-items:center;gap:6px;background:var(--amber-light);color:#7A5B00;
+    padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:16px;
+  }
+
+  /* ---------- بطاقة تقرير (تذكرة زيارة) ---------- */
+  .report-ticket{
+    background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;
+    position:relative;
+  }
+  .report-ticket .ticket-top{padding:16px 18px 12px;}
+  .report-ticket .ticket-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .report-ticket .customer-name{font-family:'Cairo';font-weight:700;font-size:15px;color:var(--navy);}
+  .report-ticket .code-chip{font-size:11px;background:var(--bg);color:var(--muted);padding:3px 9px;border-radius:8px;}
+  .report-ticket .ts{font-size:12px;color:var(--muted);}
+  .status-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+  .status-pill.open{background:var(--success-bg);color:var(--success);}
+  .status-pill.closed{background:var(--danger-bg);color:var(--danger);}
+  .ticket-divider{
+    border-top:2px dashed var(--line);position:relative;margin:0 18px;
+  }
+  .ticket-divider::before, .ticket-divider::after{
+    content:'';position:absolute;top:-9px;width:18px;height:18px;background:var(--bg);border-radius:50%;
+  }
+  .ticket-divider::before{right:-27px;}
+  .ticket-divider::after{left:-27px;}
+  .ticket-bottom{padding:12px 18px 16px;}
+  .ticket-notes{font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:10px;}
+  .ticket-photos{display:flex;gap:8px;flex-wrap:wrap;}
+  .ticket-photos img{width:56px;height:56px;border-radius:8px;object-fit:cover;}
+
+  .search-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .search-row input{flex:1;min-width:120px;}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+  .empty-state .emoji{font-size:36px;margin-bottom:10px;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--navy);color:#fff;padding:14px 22px;border-radius:30px;font-size:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);z-index:999;opacity:0;transition:opacity .25s, bottom .25s;pointer-events:none;
+  }
+  .toast.show{opacity:1;bottom:34px;}
+
+  .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;vertical-align:middle;margin-left:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- ============== شاشة تسجيل الدخول ============== -->
+<div id="loginScreen" class="screen active">
+  <div class="login-card">
+    <div class="login-badge">🧭</div>
+    <h1>تقارير زيارة العملاء</h1>
+    <p>اكتب كلمة السر الخاصة بك للدخول</p>
+    <div id="loginError" class="error-msg"></div>
+    <div class="field">
+      <input type="password" id="passwordInput" placeholder="كلمة السر" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- ============== الشاشة الرئيسية ============== -->
+<div id="mainScreen" class="screen">
+  <header class="app-header">
+    <div class="top-row">
+      <div>
+        <div class="brand">تقارير زيارة العملاء</div>
+        <div class="rep-name" id="repNameLabel"></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">خروج</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" id="tabVisit" onclick="switchTab('visit')">زيارة جديدة</div>
+    <div class="tab" id="tabReports" onclick="switchTab('reports')">التقارير</div>
+  </div>
+
+  <main>
+    <!-- ---------- تبويب زيارة جديدة ---------- -->
+    <div id="visitPane">
+      <div class="card">
+        <div class="datetime-badge" id="dateTimeBadge">🕐 سيتم تسجيل التاريخ والوقت تلقائيًا عند الإرسال</div>
+
+        <div class="field">
+          <label>كود العميل (اختياري)</label>
+          <input type="text" id="custCode" placeholder="اكتب الكود إن وُجد" onblur="lookupCustomer()">
+        </div>
+        <div class="field">
+          <label>اسم العميل *</label>
+          <input type="text" id="custName" placeholder="اسم العميل">
+        </div>
+        <div class="field">
+          <label>رقم التليفون</label>
+          <input type="tel" id="custPhone" placeholder="رقم التليفون">
+        </div>
+        <div class="field">
+          <label>العنوان</label>
+          <input type="text" id="custAddress" placeholder="عنوان العميل">
+        </div>
+
+        <div class="field">
+          <label>حالة المكان</label>
+          <div class="status-toggle">
+            <div class="status-opt selected-open" id="optOpen" onclick="setStatus(false)">✅ مفتوح</div>
+            <div class="status-opt" id="optClosed" onclick="setStatus(true)">🚫 مغلق</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>ملاحظات الزيارة</label>
+          <textarea id="notes" rows="4" placeholder="اكتب ملاحظاتك على الزيارة..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>صور الزيارة</label>
+          <div class="photo-picker" onclick="document.getElementById('photoInput').click()">
+            📷 اضغط لرفع صور من الكاميرا أو المعرض
+          </div>
+          <input type="file" id="photoInput" accept="image/*" multiple capture="environment" style="display:none" onchange="handlePhotos(event)">
+          <div class="photo-preview-grid" id="photoPreview"></div>
+        </div>
+
+        <button class="btn btn-amber" id="submitBtn" onclick="submitReport()">إرسال التقرير</button>
+      </div>
+    </div>
+
+    <!-- ---------- تبويب التقارير ---------- -->
+    <div id="reportsPane" style="display:none;">
+      <div class="card">
+        <h2>بحث في تقاريري</h2>
+        <div class="search-row">
+          <input type="text" id="fCode" placeholder="كود العميل">
+          <input type="text" id="fName" placeholder="اسم العميل">
+        </div>
+        <div class="search-row">
+          <input type="text" id="fDate" placeholder="التاريخ (YYYY-MM-DD)">
+        </div>
+        <div class="search-row">
+          <button class="btn btn-primary" style="flex:1" onclick="loadReports()">بحث</button>
+          <button class="btn btn-ghost" style="flex:1" onclick="clearFilters()">مسح</button>
+        </div>
+        <button class="btn btn-amber" onclick="exportExcel()" id="exportBtn">⬇️ تصدير Excel</button>
+      </div>
+
+      <div id="reportsList"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================== إعدادات ================== */
+// ضع هنا رابط Web App بعد نشر Code.gs (Deploy > New deployment > Web app)
+const API_URL = "https://script.google.com/macros/s/AKfycbyQBDsd_I3D1S9w0am2iiYt9DB_VAQkr9umvPuuTOgWvZZBlvfCqtvWBuuWKVro9nTC/exec";
+
+let session = { repName: null, password: null };
+let closedStatus = false;
+let selectedPhotos = []; // { base64, mimeType, filename }
+
+/* ================== أدوات مساعدة ================== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function apiCall(payload) {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(r => r.json());
+}
+
+/* ================== تسجيل الدخول ================== */
+function doLogin() {
+  const password = document.getElementById('passwordInput').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+
+  if (!password) { errEl.textContent = 'اكتب كلمة السر'; errEl.classList.add('show'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.innerHTML = 'جاري الدخول...<span class="spinner"></span>';
+
+  apiCall({ action: 'login', password: password }).then(res => {
+    btn.disabled = false; btn.innerHTML = 'دخول';
+    if (res.ok) {
+      session.repName = res.repName;
+      session.password = password;
+      localStorage.setItem('visitAppSession', JSON.stringify(session));
+      enterApp();
+    } else {
+      errEl.textContent = res.error || 'حدث خطأ';
+      errEl.classList.add('show');
+    }
+  }).catch(() => {
+    btn.disabled = false; btn.innerHTML = 'دخول';
+    errEl.textContent = 'تعذر الاتصال بالسيرفر، تأكد من الإنترنت';
+    errEl.classList.add('show');
+  });
+}
+
+function enterApp() {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('mainScreen').classList.add('active');
+  document.getElementById('repNameLabel').textContent = 'المندوب: ' + session.repName;
+}
+
+function logout() {
+  localStorage.removeItem('visitAppSession');
+  session = { repName: null, password: null };
+  document.getElementById('mainScreen').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('passwordInput').value = '';
+}
+
+/* استعادة الجلسة عند فتح التطبيق */
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('visitAppSession');
+  if (saved) {
+    session = JSON.parse(saved);
+    if (session.repName) enterApp();
+  }
+});
+
+/* ================== التبويبات ================== */
+function switchTab(tab) {
+  document.getElementById('tabVisit').classList.toggle('active', tab === 'visit');
+  document.getElementById('tabReports').classList.toggle('active', tab === 'reports');
+  document.getElementById('visitPane').style.display = tab === 'visit' ? 'block' : 'none';
+  document.getElementById('reportsPane').style.display = tab === 'reports' ? 'block' : 'none';
+  if (tab === 'reports') loadReports();
+}
+
+/* ================== البحث عن عميل بالكود ================== */
+function lookupCustomer() {
+  const code = document.getElementById('custCode').value.trim();
+  if (!code) return;
+  apiCall({ action: 'getCustomer', code: code }).then(res => {
+    if (res.ok && res.found) {
+      document.getElementById('custName').value = res.customer.name || '';
+      document.getElementById('custPhone').value = res.customer.phone || '';
+      document.getElementById('custAddress').value = res.customer.address || '';
+      showToast('تم العثور على بيانات العميل');
+    }
+  });
+}
+
+/* ================== حالة المكان ================== */
+function setStatus(isClosed) {
+  closedStatus = isClosed;
+  document.getElementById('optOpen').classList.toggle('selected-open', !isClosed);
+  document.getElementById('optClosed').classList.toggle('selected-closed', isClosed);
+}
+
+/* ================== الصور ================== */
+function handlePhotos(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedPhotos.push({ base64: reader.result, mimeType: file.type, filename: file.name });
+      renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderPhotoPreview() {
+  const grid = document.getElementById('photoPreview');
+  grid.innerHTML = '';
+  selectedPhotos.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${p.base64}"><div class="remove-x" onclick="removePhoto(${idx})">✕</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function removePhoto(idx) {
+  selectedPhotos.splice(idx, 1);
+  renderPhotoPreview();
+}
+
+/* ================== إرسال التقرير ================== */
+function submitReport() {
+  const name = document.getElementById('custName').value.trim();
+  if (!name) { showToast('اكتب اسم العميل'); return; }
+
+  const payload = {
+    action: 'submitReport',
+    repName: session.repName,
+    code: document.getElementById('custCode').value.trim(),
+    name: name,
+    phone: document.getElementById('custPhone').value.trim(),
+    address: document.getElementById('custAddress').value.trim(),
+    closed: closedStatus,
+    notes: document.getElementById('notes').value.trim(),
+    photos: selectedPhotos
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.innerHTML = 'جاري الإرسال...<span class="spinner"></span>';
+
+  apiCall(payload).then(res => {
+    btn.disabled = false; btn.innerHTML = 'إرسال التقرير';
+    if (res.ok) {
+      showToast('تم إرسال التقرير بنجاح ✅');
+      resetForm();
+    } else {
+      showToast(res.error || 'حدث خطأ أثناء الإرسال');
+    }
+  }).catch(() => {
+    btn.disabled = false; btn.innerHTML = 'إرسال التقرير';
+    showToast('تعذر الاتصال بالسيرفر');
+  });
+}
+
+function resetForm() {
+  document.getElementById('custCode').value = '';
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custAddress').value = '';
+  document.getElementById('notes').value = '';
+  selectedPhotos = [];
+  renderPhotoPreview();
+  setStatus(false);
+}
+
+/* ================== التقارير والبحث ================== */
+function clearFilters() {
+  document.getElementById('fCode').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fDate').value = '';
+  loadReports();
+}
+
+function loadReports() {
+  const listEl = document.getElementById('reportsList');
+  listEl.innerHTML = '<div class="empty-state">جاري التحميل...</div>';
+
+  const filters = {
+    code: document.getElementById('fCode').value.trim(),
+    name: document.getElementById('fName').value.trim(),
+    date: document.getElementById('fDate').value.trim()
+  };
+
+  apiCall({ action: 'getReports', repName: session.repName, filters: filters }).then(res => {
+    if (!res.ok) { listEl.innerHTML = `<div class="empty-state">${res.error}</div>`; return; }
+    if (res.reports.length === 0) {
+      listEl.innerHTML = `<div class="empty-state"><div class="emoji">📭</div>لا توجد تقارير مطابقة</div>`;
+      return;
+    }
+    listEl.innerHTML = res.reports.map(renderTicket).join('');
+  });
+}
+
+function renderTicket(r) {
+  const isClosed = r.status === 'مغلق';
+  const photosHtml = r.photos.length
+    ? `<div class="ticket-photos">${r.photos.map(p => `<a href="${p}" target="_blank"><img src="${p}"></a>`).join('')}</div>`
+    : '';
+  return `
+    <div class="report-ticket">
+      <div class="ticket-top">
+        <div class="ticket-row">
+          <div class="customer-name">${escapeHtml(r.name)}</div>
+          <span class="status-pill ${isClosed ? 'closed' : 'open'}">${isClosed ? '🚫 مغلق' : '✅ مفتوح'}</span>
+        </div>
+        <div class="ticket-row">
+          <span class="code-chip">${r.code ? 'كود: ' + escapeHtml(r.code) : 'بدون كود'}</span>
+          <span class="ts">${escapeHtml(r.timestamp)}</span>
+        </div>
+      </div>
+      <div class="ticket-divider"></div>
+      <div class="ticket-bottom">
+        ${r.notes ? `<div class="ticket-notes">${escapeHtml(r.notes)}</div>` : ''}
+        ${photosHtml}
+      </div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+/* ================== تصدير Excel ================== */
+function exportExcel() {
+  const filters = {
+    code: document.getElementById('fCode').value.trim(),
+    name: document.getElementById('fName').value.trim(),
+    date: document.getElementById('fDate').value.trim()
+  };
+
+  const btn = document.getElementById('exportBtn');
+  btn.disabled = true; btn.innerHTML = 'جاري التجهيز...<span class="spinner"></span>';
+
+  apiCall({ action: 'exportExcel', repName: session.repName, filters: filters }).then(res => {
+    btn.disabled = false; btn.innerHTML = '⬇️ تصدير Excel';
+    if (res.ok) {
+      window.open(res.downloadUrl, '_blank');
+      showToast('تم تجهيز الملف، جاري فتحه...');
+    } else {
+      showToast(res.error || 'تعذر التصدير');
+    }
+  }).catch(() => {
+    btn.disabled = false; btn.innerHTML = '⬇️ تصدير Excel';
+    showToast('تعذر الاتصال بالسيرفر');
+  });
+}
+
+/* ================== PWA Service Worker ================== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
